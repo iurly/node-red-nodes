@@ -357,6 +357,19 @@ module.exports = function(RED) {
 
                                 // do the timer thing
                                 if (spliton === "time" || spliton === "interbyte") {
+                                    // corner case: we've hit the buffer boundary
+                                    if (i >= bufMaxSize) {
+                                        // emit what we already have, start all over and clear the timer
+                                        // in both cases, we only need to restart the timer if there's
+                                        // indeed some further character -- otherwise we're cool
+                                        emitData(buf.slice(0,i));
+                                        i=0;
+                                        if (obj.tout) {
+                                            clearTimeout(obj.tout);
+                                            obj.tout = null;
+                                        }
+                                        continue;
+                                    }
                                     // start the timeout at the first character in case of regular timeout
                                     // restart it at the last character of the this event in case of interbyte timeout
                                     if ((spliton === "time" && i === 1) ||
